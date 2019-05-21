@@ -24,6 +24,24 @@ type City struct {
 	Population  int    `json:"population,omitempty"  db:"Population"`
 }
 
+type Country struct {
+	Code           string  `json:"code,omitempty"  db:"Code"`
+	Name           string  `json:"name,omitempty"  db:"Name"`
+	Continent      string  `json:"continent,omitempty"  db:"Continent"`
+	Region         string  `json:"region,omitempty"  db:"Region"`
+	SurfaceArea    float64 `json:"surfacearea,omitempty"  db:"SurfaceArea"`
+	IndepYear      int     `json:"indepyear,omitempty"  db:"IndepYear"`
+	Population     int     `json:"population,omitempty"  db:"Population"`
+	LifeExpectancy float64 `json:"lifeexpectancy,omitempty"  db:"LifeExpextancy"`
+	GNP            float64 `json:"gnp,omitempty"  db:"GNP"`
+	GNPOld         float64 `json:"gnpold,omitempty"  db:"GNPOld"`
+	LocalName      string  `json:"localname,omitempty"  db:"LocalNaem"`
+	GovernmentForm string  `json:"governmentform,omitempty"  db:"GovernmentForm"`
+	HeadOfState    string  `json:"headofstate,omitempty"  db:"HeadOfState"`
+	Capital        int     `json:"capital,omitempty"  db:"Capital"`
+	Code2          string  `json:"code2,omitempty"  db:"Code2"`
+}
+
 var (
 	db *sqlx.DB
 )
@@ -53,9 +71,11 @@ func main() {
 	withLogin := e.Group("")
 	withLogin.Use(checkLogin)
 	withLogin.GET("/cities/:cityName", getCityInfoHandler)
+	//withLogin.GET("/countries", getCountryInfoHandler)
+	withLogin.GET("/countries/:countryName", getCountryInfoHandler)
 	withLogin.GET("/whoami", getWhoAmIHandler)
+	//e.GET("/countries/:countryName", getCountryInfoHandler)
 	e.GET("/login/username", getUserName)
-
 	e.Start(":12500")
 }
 
@@ -166,6 +186,32 @@ func getCityInfoHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, city)
 }
+
+func getCountryInfoHandler(c echo.Context) error {
+	countryName := c.Param("countryName")
+	country := Country{}
+	db.Get(&country, "SELECT * FROM country WHERE Name=?", countryName)
+	if country.Name == "" {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	return c.JSON(http.StatusOK, country)
+}
+
+/*func getCountryInfoHandler(c echo.Context) error {
+	//countryList := c.Param("cityName")
+	
+
+	countryList := Country{}
+	db.Get(&countryList, "SELECT * FROM country WHERE Name = 'Japn' ")
+	if countryList.Name == "" {
+		return c.NoContent(http.StatusNotFound)
+	}
+	
+
+	return c.JSON(http.StatusOK, countryList)
+}*/
+
 var name = ""
 
 func getUserName(c echo.Context) error {
@@ -177,5 +223,3 @@ func getWhoAmIHandler(c echo.Context) error {
 		Username: c.Get("userName").(string),
 	})
 }
-
-
