@@ -32,10 +32,10 @@ type Country struct {
 	SurfaceArea    float64 `json:"surfacearea,omitempty"  db:"SurfaceArea"`
 	IndepYear      int     `json:"indepyear,omitempty"  db:"IndepYear"`
 	Population     int     `json:"population,omitempty"  db:"Population"`
-	LifeExpectancy float64 `json:"lifeexpectancy,omitempty"  db:"LifeExpextancy"`
+	LifeExpectancy float64 `json:"lifeexpectancy,omitempty"  db:"LifeExpectancy"`
 	GNP            float64 `json:"gnp,omitempty"  db:"GNP"`
 	GNPOld         float64 `json:"gnpold,omitempty"  db:"GNPOld"`
-	LocalName      string  `json:"localname,omitempty"  db:"LocalNaem"`
+	LocalName      string  `json:"localname,omitempty"  db:"LocalName"`
 	GovernmentForm string  `json:"governmentform,omitempty"  db:"GovernmentForm"`
 	HeadOfState    string  `json:"headofstate,omitempty"  db:"HeadOfState"`
 	Capital        int     `json:"capital,omitempty"  db:"Capital"`
