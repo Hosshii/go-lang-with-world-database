@@ -1,6 +1,8 @@
 package main
 
 import (
+	//"encoding/json"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,23 +27,62 @@ type City struct {
 }
 
 type Country struct {
-	Code           string  `json:"code,omitempty"  db:"Code"`
-	Name           string  `json:"name,omitempty"  db:"Name"`
-	Continent      string  `json:"continent,omitempty"  db:"Continent"`
-	Region         string  `json:"region,omitempty"  db:"Region"`
-	SurfaceArea    float64 `json:"surfacearea,omitempty"  db:"SurfaceArea"`
-	IndepYear      int     `json:"indepyear,omitempty"  db:"IndepYear"`
-	Population     int     `json:"population,omitempty"  db:"Population"`
-	LifeExpectancy float64 `json:"lifeexpectancy,omitempty"  db:"LifeExpectancy"`
-	GNP            float64 `json:"gnp,omitempty"  db:"GNP"`
-	GNPOld         float64 `json:"gnpold,omitempty"  db:"GNPOld"`
-	LocalName      string  `json:"localname,omitempty"  db:"LocalName"`
-	GovernmentForm string  `json:"governmentform,omitempty"  db:"GovernmentForm"`
-	HeadOfState    string  `json:"headofstate,omitempty"  db:"HeadOfState"`
-	Capital        int     `json:"capital,omitempty"  db:"Capital"`
-	Code2          string  `json:"code2,omitempty"  db:"Code2"`
+	Code           string          `json:"code,omitempty"  db:"Code"`
+	Name           string          `json:"name,omitempty"  db:"Name"`
+	Continent      string          `json:"continent"  db:"Continent"`
+	Region         string          `json:"region,omitempty"  db:"Region"`
+	SurfaceArea    float64         `json:"surfacearea,omitempty"  db:"SurfaceArea"`
+	IndepYear      sql.NullInt64   `json:"indepyear,omitempty"  db:"IndepYear"`
+	Population     int             `json:"population,omitempty"  db:"Population"`
+	LifeExpectancy sql.NullFloat64 `json:"lifeexpectancy,omitempty"  db:"LifeExpectancy"`
+	GNP            sql.NullFloat64 `json:"gnp,omitempty"  db:"GNP"`
+	GNPOld         sql.NullFloat64 `json:"gnpold,omitempty"  db:"GNPOld"`
+	LocalName      string          `json:"localname,omitempty"  db:"LocalName"`
+	GovernmentForm string          `json:"governmentform,omitempty"  db:"GovernmentForm"`
+	HeadOfState    sql.NullString  `json:"headofstate,omitempty"  db:"HeadOfState"`
+	Capital        sql.NullInt64   `json:"capital,omitempty"  db:"Capital"`
+	Code2          string          `json:"code2,omitempty"  db:"Code2"`
+}
+/*
+type NullInt64 struct {    // 新たに型を定義
+    sql.NullInt64
 }
 
+type NullString struct {    // 新たに型を定義
+    sql.NullString
+}
+
+type someModel struct {
+    code NullInt64    // 新しい型を指定
+    name NullString    // 新しい型を指定
+}
+
+func (ni *NullInt64) UnmarshalJSON(value []byte) error {
+    err := json.Unmarshal(value, ni.Int64)
+    ni.Valid = err == nil
+    return err
+}
+
+func (ni NullInt64) MarshalJSON() ([]byte, error) {
+    if !ni.Valid {
+        return json.Marshal(nil)
+    }
+    return json.Marshal(ni.Int64)    // 値のフィールドのみ返す
+}
+
+func (ns *NullString) UnmarshalJSON(value []byte) error {
+    err := json.Unmarshal(value, ns.String)
+    ns.Valid = err == nil
+    return err
+}
+
+func (ns NullString) MarshalJSON() ([]byte, error) {
+    if !ns.Valid {
+        return json.Marshal(nil)
+    }
+    return json.Marshal(ns.String)    // 値のフィールドのみ返す
+}
+*/
 var (
 	db *sqlx.DB
 )
@@ -72,7 +113,7 @@ func main() {
 	withLogin.Use(checkLogin)
 	withLogin.GET("/cities/:cityName", getCityInfoHandler)
 	//withLogin.GET("/countries", getCountryInfoHandler)
-	withLogin.GET("/countries/:countryName", getCountryInfoHandler)
+	withLogin.GET("/countries", getAllCountryInfoHandler)
 	withLogin.GET("/whoami", getWhoAmIHandler)
 	//e.GET("/countries/:countryName", getCountryInfoHandler)
 	e.GET("/login/username", getUserName)
@@ -179,38 +220,36 @@ func getCityInfoHandler(c echo.Context) error {
 	cityName := c.Param("cityName")
 
 	city := City{}
-	db.Get(&city, "SELECT * FROM city WHERE Name=?", cityName)
+	//
+	err := db.Get(&city, "SELECT * FROM city WHERE Name=?", cityName)
+	//
 	if city.Name == "" {
 		return c.NoContent(http.StatusNotFound)
 	}
-
+	//
+	if err != nil {
+		fmt.Println(err)
+		return c.String(http.StatusInternalServerError, "something wrong")
+	}
+	//
 	return c.JSON(http.StatusOK, city)
 }
 
-func getCountryInfoHandler(c echo.Context) error {
-	countryName := c.Param("countryName")
-	country := Country{}
-	db.Get(&country, "SELECT * FROM country WHERE Name=?", countryName)
-	if country.Name == "" {
+func getAllCountryInfoHandler(c echo.Context) error {
+	//countryName := c.Param("countryName")
+	country := []Country{}
+	err := db.Select(&country, "SELECT * FROM country ")
+	/*if country.Name == "" {
 		return c.NoContent(http.StatusNotFound)
+	}*/
+	if err != nil {
+		fmt.Println(err)
+		return c.String(http.StatusInternalServerError, "something wrong")
 	}
 
 	return c.JSON(http.StatusOK, country)
 }
 
-/*func getCountryInfoHandler(c echo.Context) error {
-	//countryList := c.Param("cityName")
-	
-
-	countryList := Country{}
-	db.Get(&countryList, "SELECT * FROM country WHERE Name = 'Japn' ")
-	if countryList.Name == "" {
-		return c.NoContent(http.StatusNotFound)
-	}
-	
-
-	return c.JSON(http.StatusOK, countryList)
-}*/
 
 var name = ""
 
