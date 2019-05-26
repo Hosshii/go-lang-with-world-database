@@ -26,7 +26,24 @@ type City struct {
 	Population  int    `json:"population,omitempty"  db:"Population"`
 }
 
-type Country struct {
+/*type CountryInfo struct {
+	Code           string          `json:"code,omitempty"  db:"Code"`
+	Name           string          `json:"name,omitempty"  db:"Name"`
+	Continent      string          `json:"continent"  db:"Continent"`
+	Region         string          `json:"region,omitempty"  db:"Region"`
+	SurfaceArea    float64         `json:"surfacearea,omitempty"  db:"SurfaceArea"`
+	IndepYear      sql.NullInt64   `json:"indepyear,omitempty"  db:"IndepYear"`
+	Population     int             `json:"population,omitempty"  db:"Population"`
+	LifeExpectancy sql.NullFloat64 `json:"lifeexpectancy,omitempty"  db:"LifeExpectancy"`
+	GNP            sql.NullFloat64 `json:"gnp,omitempty"  db:"GNP"`
+	GNPOld         sql.NullFloat64 `json:"gnpold,omitempty"  db:"GNPOld"`
+	LocalName      string          `json:"localname,omitempty"  db:"LocalName"`
+	GovernmentForm string          `json:"governmentform,omitempty"  db:"GovernmentForm"`
+	HeadOfState    sql.NullString  `json:"headofstate,omitempty"  db:"HeadOfState"`
+	Capital        sql.NullInt64   `json:"capital,omitempty"  db:"Capital"`
+	Code2          string          `json:"code2,omitempty"  db:"Code2"`
+}*/
+type CountryInfo struct {
 	Code           string          `json:"code,omitempty"  db:"Code"`
 	Name           string          `json:"name,omitempty"  db:"Name"`
 	Continent      string          `json:"continent"  db:"Continent"`
@@ -43,6 +60,22 @@ type Country struct {
 	Capital        sql.NullInt64   `json:"capital,omitempty"  db:"Capital"`
 	Code2          string          `json:"code2,omitempty"  db:"Code2"`
 }
+
+type Country struct {
+	Code string `json:"code,omitempty"  db:"Code"`
+	Name string `json:"name,omitempty"  db:"Name"`
+}
+
+type CityInfo struct {
+	ID          int    `json:"id,omitempty"  db:"ID"`
+	CityName    string `json:"cityname,omitempty"  db:"CityName"`
+	CountryCode string `json:"countryCode,omitempty"  db:"CountryCode"`
+	District    string `json:"district,omitempty"  db:"District"`
+	Population  int    `json:"population,omitempty"  db:"Population"`
+	Code        string `json:"code,omitempty"  db:"Code"`
+	CountryName string `json:"countryname,omitempty"  db:"Name"`
+}
+
 /*
 type NullInt64 struct {    // 新たに型を定義
     sql.NullInt64
@@ -113,8 +146,10 @@ func main() {
 	withLogin.Use(checkLogin)
 	withLogin.GET("/cities/:cityName", getCityInfoHandler)
 	//withLogin.GET("/countries", getCountryInfoHandler)
-	withLogin.GET("/countries", getAllCountryInfoHandler)
+	withLogin.GET("/countries", getAllCountryNameHandler)
+	withLogin.GET("/countries/:countryName", getCityListHandler)
 	withLogin.GET("/whoami", getWhoAmIHandler)
+
 	//e.GET("/countries/:countryName", getCountryInfoHandler)
 	e.GET("/login/username", getUserName)
 	e.Start(":12500")
@@ -235,10 +270,10 @@ func getCityInfoHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, city)
 }
 
-func getAllCountryInfoHandler(c echo.Context) error {
+func getAllCountryNameHandler(c echo.Context) error {
 	//countryName := c.Param("countryName")
 	country := []Country{}
-	err := db.Select(&country, "SELECT * FROM country ")
+	err := db.Select(&country, "SELECT Name,Code FROM country ORDER BY name ")
 	/*if country.Name == "" {
 		return c.NoContent(http.StatusNotFound)
 	}*/
@@ -250,6 +285,17 @@ func getAllCountryInfoHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, country)
 }
 
+func getCityListHandler(c echo.Context) error {
+	countryName := c.Param("countryName")
+	cityInfo := []CityInfo{}
+	err := db.Select(&cityInfo, "SELECT city.*,city.name AS CityName,country.Code,country.Name  FROM `city` LEFT OUTER JOIN `country` ON city.CountryCode=country.Code WHERE country.Name=? ORDER BY city.district ASC", countryName)
+
+	if err != nil {
+		fmt.Println(err)
+		return c.String(http.StatusInternalServerError, "something wrong")
+	}
+	return c.JSON(http.StatusOK, cityInfo)
+}
 
 var name = ""
 
